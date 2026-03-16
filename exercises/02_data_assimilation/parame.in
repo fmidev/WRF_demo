@@ -1,0 +1,30 @@
+&control_param
+ ! Path to the DA analysis file (output of da_wrfvar.exe — wrfvar_output)
+ da_file            = './wrfvar_output',
+
+ ! Path to the wrfinput file produced by real.exe in Exercise 1
+ wrf_input          = './wrfinput_d01',
+
+ ! Path to the wrfbdy file produced by real.exe in Exercise 1
+ wrf_bdy_file       = './wrfbdy_d01',
+
+ domain_id          = 1,
+
+ ! cycling = .true.: update wrfinput AND wrfbdy for a cycled DA system
+ cycling            = .true.,
+
+ ! update_low_bdy: update lower boundary conditions (SST, soil) from the
+ !   first-guess file — set .true. for warm-started / cycling runs
+ update_low_bdy     = .true.,
+
+ ! update_lateral_bdy: update lateral BCs in wrfbdy from the analysis
+ !   — .false. here because our BCs come from GFS, not a parent domain
+ update_lateral_bdy = .false.,
+
+ ! update_lsm: update land-surface fields from the first guess
+ update_lsm         = .false.,
+
+ debug              = .false.,
+ iswater            = 17,
+ var4d_lbc          = .false.,
+/

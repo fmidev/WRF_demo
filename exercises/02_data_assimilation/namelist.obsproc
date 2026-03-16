@@ -1,0 +1,75 @@
+&record1
+ ! Path to the raw observations file in GTS / little_r ASCII format
+ obs_gts_filename = 'ob.ascii',
+ obs_err_filename = 'obserr.txt',
+ gts_from_mmm_archive = .false.,
+/
+
+&record2
+ ! Observation window: ±1 hour around the analysis time
+ time_window_min  = '2019-09-04_11:00:00',
+ time_analysis    = '2019-09-04_12:00:00',
+ time_window_max  = '2019-09-04_13:00:00',
+/
+
+&record3
+ max_number_of_obs        = 400000,
+ fatal_if_exceed_max_obs  = .true.,
+/
+
+&record4
+ qc_test_vert_consistency = .true.,
+ qc_test_convective_adj   = .true.,
+ qc_test_above_lid        = .true.,
+ remove_above_lid         = .false.,
+ domain_check_h           = .true.,
+ Thining_SATOB            = .false.,
+ Thining_SSMI             = .false.,
+ Thining_QSCAT            = .false.,
+ calc_psfc_from_qnh       = .true.,
+/
+
+&record5
+ print_gts_read           = .true.,
+ print_gpspw_read         = .true.,
+ print_recoverp           = .true.,
+ print_duplicate_loc      = .true.,
+ print_duplicate_time     = .true.,
+ print_recoverh           = .true.,
+ print_qc_vert            = .true.,
+ print_qc_conv            = .true.,
+ print_qc_lid             = .true.,
+ print_uncomplete         = .true.,
+/
+
+&record6
+ ptop            =  1000.0,
+ base_pres       = 100000.0,
+ base_temp       = 290.0,
+ base_lapse      = 50.0,
+ base_strat_temp = 215.0,
+ base_tropo_pres = 20000.0,
+/
+
+&record7
+ ! These values must match the projection in your namelist.wps / geo_em file
+ IPROJ    = 1,          ! 1 = Lambert conformal
+ PHIC     = 33.0,       ! ref_lat from namelist.wps
+ XLONC    = -79.0,      ! ref_lon / stand_lon
+ TRUELAT1 = 30.0,
+ TRUELAT2 = 60.0,
+ MOAD_CEN_LAT = 33.0,
+ STANDARD_LON = -79.0,
+/
+
+&record8
+ ! Grid dimensions — must match &domains in namelist.input exactly
+ IDD    = 1,
+ MAXNES = 1,
+ NESTIX = 130,   ! e_sn
+ NESTJX = 150,   ! e_we
+ DIS    = 15.0,  ! dx/dy in km
+ NUMC   = 1,
+ NESTI  = 1,
+ NESTJ  = 1,
+/

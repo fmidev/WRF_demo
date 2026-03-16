@@ -1,0 +1,137 @@
+ &wrfvar1
+ ! 3D-Var (not 4D-Var)
+ var4d                = .false.,
+ print_detail_grad    = .false.,
+/
+
+ &wrfvar2
+/
+
+ &wrfvar3
+ ! ob_format = 1 → PREPBUFR (read directly by da_wrfvar.exe — no obsproc needed)
+ ! ob_format = 2 → WRF obs ASCII (output of obsproc.exe — not used in this exercise)
+ ob_format            = 1,
+ num_fgat_time        = 1,
+/
+
+ &wrfvar4
+ ! Conventional observations — all enabled here; WRFDA will just skip
+ ! observation types that are not present in ob.ascii
+ use_synopobs         = .true.,
+ use_shipsobs         = .true.,
+ use_metarobs         = .true.,
+ use_soundobs         = .true.,
+ use_pilotobs         = .true.,
+ use_airepobs         = .true.,
+ use_geoamvobs        = .false.,
+ use_gpspwobs         = .false.,
+ use_gpsrefobs        = .false.,
+ use_satemobs         = .false.,
+ ! Satellite radiances — disabled for simplicity in this exercise
+ use_amsuaobs         = .false.,
+ use_mhsobs           = .false.,
+ use_atmsobs          = .false.,
+ use_iasiobs          = .false.,
+/
+
+ &wrfvar5
+ put_rand_seed        = .true.,
+/
+
+ &wrfvar6
+ ! Minimisation settings — 1 outer loop, up to 200 inner iterations
+ max_ext_its          = 1,
+ ntmax                = 200,
+ eps                  = 0.01,
+ orthonorm_gradient   = .true.,
+/
+
+ &wrfvar7
+ ! CV3 = NMC background error statistics (global, pre-computed)
+ ! This is the simplest option that does not require a domain-specific be.dat
+ cv_options           = 3,
+/
+
+ &wrfvar8
+/
+
+ &wrfvar10
+ test_transforms      = .false.,
+ test_gradient        = .false.,
+/
+
+ &wrfvar11
+ ! sfc_assi_options = 2: surface observations assimilated via a 1-D OI
+ sfc_assi_options     = 2,
+/
+
+ &wrfvar14
+ ! No satellite sensors in this exercise
+ rtminit_nsensor      = 0,
+/
+
+ &wrfvar18
+ ! Must match the WRF start time exactly
+ analysis_date        = '2019-09-04_12:00:00.0000',
+/
+
+ &wrfvar21
+ ! Observation window start (must match namelist.obsproc record2)
+ time_window_min      = '2019-09-04_11:00:00.0000',
+/
+
+ &wrfvar22
+ ! Observation window end (must match namelist.obsproc record2)
+ time_window_max      = '2019-09-04_13:00:00.0000',
+/
+
+ &time_control
+ start_year           = 2019,
+ start_month          = 09,
+ start_day            = 04,
+ start_hour           = 12,
+ end_year             = 2019,
+ end_month            = 09,
+ end_day              = 04,
+ end_hour             = 12,
+/
+
+ &fdda
+ grid_fdda            = 0,
+/
+
+ &domains
+ time_step            = 90,
+ e_we                 = 150,
+ e_sn                 = 130,
+ e_vert               = 45,
+ dx                   = 15000,
+ dy                   = 15000,
+/
+
+ &dfi_control
+/
+
+ &tc
+/
+
+ &physics
+ mp_physics           = 8,
+ ra_lw_physics        = 4,
+ ra_sw_physics        = 4,
+ bl_pbl_physics       = 2,
+ sf_sfclay_physics    = 2,
+ sf_surface_physics   = 2,
+ cu_physics           = 6,
+ num_land_cat         = 21,
+/
+
+ &dynamics
+ hybrid_opt           = 2,
+ non_hydrostatic      = .true.,
+/
+
+ &bdy_control
+ spec_bdy_width       = 5,
+ specified            = .true.,
+/
