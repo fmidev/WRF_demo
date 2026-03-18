@@ -5,7 +5,7 @@ A WRF training environment with installation script and hands-on exercises.
 ## Requirements
 
 - **Rocky Linux 9** (or compatible RHEL 9 derivative)
-- ~200-300 GB free disk space (source code, compiled libraries, WPS_GEOG data, output data files)
+- ~100-200 GB free disk space (source code, compiled libraries, WPS_GEOG data, output data files)
 
 ## What is included
 

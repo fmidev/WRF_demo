@@ -17,8 +17,8 @@ Usage
     python3 $HOME/WRF_demo/exercises/03_sensitivity_run/plot_comparison.py \\
         --run1  $HOME/WRF_demo_env/run/ex01 \\
         --run2  $HOME/WRF_demo_env/run/ex03 \\
-        --label1 "Ex01 CONUS suite" \\
-        --label2 "Ex03 KF/RRTMG/YSU" \\
+        --label1 "Ex01 — full diffusion tensor (diff_opt=2, km_opt=4)" \\
+        --label2 "Ex03 — simple diffusion (diff_opt=1, km_opt=1)" \\
         --time 6
 
 Arguments
@@ -65,9 +65,9 @@ parser.add_argument("--run1",   default=None,
                     help="Directory with wrfout files for Run 1 (default: $BASE_DIR/run/ex01)")
 parser.add_argument("--run2",   default=".",
                     help="Directory with wrfout files for Run 2 (default: current directory)")
-parser.add_argument("--label1", default="Run 1 — Ex01 CONUS suite",
+parser.add_argument("--label1", default="Run 1 — Ex01 (diff_opt=2, km_opt=4)",
                     help="Panel title for Run 1")
-parser.add_argument("--label2", default="Run 2 — Ex03 sensitivity",
+parser.add_argument("--label2", default="Run 2 — Ex03 (diff_opt=1, km_opt=1)",
                     help="Panel title for Run 2")
 parser.add_argument("--time", "-t", type=int, default=0, metavar="N",
                     help="Time index to plot (default: 0)")

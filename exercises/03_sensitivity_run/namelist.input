@@ -1,4 +1,8 @@
  &time_control
+ ! -----------------------------------------------------------------------
+ ! Update start_*/end_* dates and run_days/run_hours to match your
+ ! Exercise 1 namelist.input (same run period required for comparison).
+ ! -----------------------------------------------------------------------
  run_days                            = 1,
  run_hours                           = 0,
  run_minutes                         = 0,
@@ -21,19 +25,23 @@
  io_form_restart                     = 2,
  io_form_input                       = 2,
  io_form_boundary                    = 2,
+ io_form_auxinput4                   = 2,
+ auxinput4_interval                  = 360,
+ auxinput4_inname                    = "wrflowinp_d<domain>",
  /
 
  &domains
  ! -------------------------------------------------------------------------
- ! Domain geometry is IDENTICAL to Exercise 1 so we can compare the two
- ! runs on the same grid.  Do not change any of these values.
+ ! Domain geometry — must be IDENTICAL to your Exercise 1 namelist.input.
+ ! Update these values if your domain differs from the demo defaults below.
+ ! Rule of thumb for time_step: dx_km × 6  (e.g. 12 km → 72 s → use 60 s)
  ! -------------------------------------------------------------------------
- time_step                           = 90,
+ time_step                           = 60,
  time_step_fract_num                 = 0,
  time_step_fract_den                 = 1,
  max_dom                             = 1,
- e_we                                = 150,
- e_sn                                = 130,
+ e_we                                = 141,
+ e_sn                                = 122,
  e_vert                              = 45,
  dzbot                               = 30.
  dzstretch_s                         = 1.11,
@@ -41,8 +49,9 @@
  p_top_requested                     = 5000,
  num_metgrid_levels                  = 34,
  num_metgrid_soil_levels             = 4,
- dx                                  = 15000,
- dy                                  = 15000,
+ dx                                  = 12000,
+ dy                                  = 12000,
+ sst_update                          = 1,
  grid_id                             = 1,
  parent_id                           = 0,
  i_parent_start                      = 1,
@@ -55,24 +64,18 @@
 
  &physics
  ! -------------------------------------------------------------------------
- ! Physics settings — CHANGED from Exercise 1
- !
- ! Exercise 1 used the 'CONUS' physics suite (all -1 = suite defaults).
- ! Here each scheme is selected explicitly so you can see exactly what is
- ! running and experiment with individual options.
+ ! Physics settings — same schemes as Exercise 1 (for apples-to-apples
+ ! comparison — only dynamics differ).
  !
  !   mp_physics     = 8  → Thompson aerosol-aware microphysics
- !                         (Ex1 CONUS suite uses Thompson, 8, as well,
- !                          but here it is set explicitly)
  !   cu_physics     = 1  → Kain-Fritsch cumulus parameterisation
- !                         (Ex1 CONUS uses Tiedtke, 16)
  !   ra_lw_physics  = 4  → RRTMG longwave radiation
  !   ra_sw_physics  = 4  → RRTMG shortwave radiation
- !                         (Ex1 CONUS uses RRTM lw=3, Dudhia sw=1)
  !   bl_pbl_physics = 1  → YSU planetary boundary layer
- !                         (Ex1 CONUS uses MYJ, 2)
  !   sf_sfclay_physics = 1  → Revised MM5 surface layer (required by YSU)
  !   sf_surface_physics = 2 → Noah land-surface model
+ !
+ ! To experiment with different schemes, change one at a time and re-run.
  ! -------------------------------------------------------------------------
  physics_suite                       = 'none',
  mp_physics                          = 8,
@@ -98,12 +101,12 @@
  ! -------------------------------------------------------------------------
  ! Dynamics settings — CHANGED from Exercise 1
  !
- !   w_damping  = 1  → enable vertical velocity damping
- !                      (Ex1 has w_damping = 0)
  !   diff_opt   = 1  → simple horizontal diffusion
  !                      (Ex1 uses diff_opt = 2, full diffusion tensor)
  !   km_opt     = 1  → constant eddy diffusion coefficient
  !                      (Ex1 uses km_opt = 4, 3-D TKE)
+ !
+ ! w_damping = 1 is the same as Exercise 1.
  ! -------------------------------------------------------------------------
  hybrid_opt                          = 2,
  w_damping                           = 1,

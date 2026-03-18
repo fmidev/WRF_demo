@@ -30,7 +30,7 @@ start running the executables.
 ## Background — the WRF workflow
 
 ```
-GFS / ERA5 GRIB data
+GFS GRIB data
         │
         ▼
   ┌─────────────┐
@@ -73,38 +73,15 @@ you into the provided `namelist.wps` template.
 2. Click **Add domain** (the `+` button in the top-left panel).
 
 3. Choose a **map projection**:
-   - `Lambert Conformal` — best for mid-latitude domains (Europe, CONUS, …)
+   - `Lambert Conformal` — best for mid-latitude domains (Europe, …)
    - `Mercator` — better for near-equatorial domains
    - `Polar stereographic` — best for high-latitude / polar domains
 
 4. Pan and zoom the map to your area of interest, then drag the domain box to
    position it.  Use the panel on the left to fine-tune the parameters.
 
-5. Once satisfied, read off these values from the Domain Wizard panel and
-   open the template namelist:
-
-   ```bash
-   nano $HOME/WRF_demo/exercises/01_basic_wrf_run/namelist.wps
-   ```
-
-   Edit the `&share` and `&geogrid` sections to match Domain Wizard:
-
-   | Domain Wizard field | `namelist.wps` parameter | Example |
-   |---------------------|--------------------------|---------|
-   | Start date / End date | `start_date`, `end_date` | `'2019-09-04_12:00:00'` |
-   | dx / dy (metres) | `dx`, `dy` | `15000` |
-   | e_we (W–E grid points) | `e_we` | `150` |
-   | e_sn (S–N grid points) | `e_sn` | `130` |
-   | Centre latitude | `ref_lat` | `33.00` |
-   | Centre longitude | `ref_lon` | `-79.00` |
-   | True latitude 1 | `truelat1` | `30.0` |
-   | True latitude 2 | `truelat2` | `60.0` |
-   | Standard longitude | `stand_lon` | `-79.0` |
-   | Projection | `map_proj` | `'lambert'` |
-
-   Leave `geog_data_path`, `wrf_core`, `max_dom`, `interval_seconds`,
-   `out_format`, `prefix`, and `fg_name` unchanged — they are already set
-   correctly for this exercise.
+5. Once satisfied, make a note of the parameter values shown in the Domain Wizard
+   panel — you will enter them into `namelist.wps` later.
 
 6. Make a note of your domain's approximate bounding box (westernmost,
    easternmost, southernmost, northernmost corners in degrees) — you will need
@@ -133,7 +110,49 @@ All commands below assume your shell is in `$WORK`.
 
 ---
 
-### 2 — `geogrid.exe` — static geographical pre-processing
+### 2 — Download GFS boundary data
+
+**What it does:**  
+Fetches GFS 0.25° GRIB2 files from the NOAA NOMADS filter server for the
+model cycle that matches your `start_date` / `end_date`.  Only the pressure
+levels, surface fields, and variables that WPS actually needs are requested,
+so each file stays a manageable size.
+
+The script asks four questions interactively:
+
+| Prompt | Where to get the value |
+|--------|------------------------|
+| Cycle date (`YYYYMMDD`) | Your `start_date` in `namelist.wps` (date part) |
+| Cycle hour (`00/06/12/18`) | Your `start_date` in `namelist.wps` (hour part, only 00,06,12 and 18 UTC available) |
+| Forecast length (hours) | `end_date` − `start_date` (e.g. 24 for a 24-h run) |
+| Interval between files (hours) | `interval_seconds` ÷ 3600 (typically `3` or `6`) |
+| Domain bounding box (N/S/W/E) | From Step 0 — add ~10° margin on every side |
+
+**Files produced** (in `input_grib/` inside the exercise directory):
+- `gfs_YYYY-MM-DD_HH.grb2` — one file per requested time step
+
+```bash
+# Run from $WORK — the script always writes into the exercise's input_grib/
+bash $HOME/WRF_demo/exercises/01_basic_wrf_run/get_gfs.sh
+```
+
+After the script finishes, verify the files are present and non-zero:
+
+```bash
+ls -lh $WORK/input_grib/gfs_*.grb2
+```
+
+You should see one `.grb2` file per time step (e.g. 9 files for a 24-h run at
+3-h intervals: f000, f003, f006, … f024).
+
+> **Tip:** Run `bash $HOME/WRF_demo/exercises/01_basic_wrf_run/get_gfs.sh -n` first for a **dry run** — it prints the
+> URLs and settings without downloading anything, so you can sanity-check your
+> inputs before committing to the transfer.
+
+> **Note:** NOMADS only keeps the most recent ~5 days of GFS output.  
+---
+
+### 4 — `geogrid.exe` — static geographical pre-processing
 
 **What it does:**  
 Reads `namelist.wps` (`&geogrid` section) and interpolates high-resolution
@@ -149,13 +168,37 @@ Produces one NetCDF file per domain: `geo_em.dNN.nc`.
 - `geo_em.d01.nc`
 
 ```bash
-# Copy the namelist.wps template (already edited with your domain values in Step 0)
-# and patch the geog_data_path to the demo installation
+# Copy the namelist.wps template to $WORK and edit it there
 cp $HOME/WRF_demo/exercises/01_basic_wrf_run/namelist.wps $WORK/namelist.wps
+
+# Patch geog_data_path to the demo installation path
 sed -i "s|/home/WRF_DEMO_USER/WRF_demo_env/WPS_GEOG|${GEOG_DATA_PATH}|g" $WORK/namelist.wps
 
-# GEOGRID.TBL tells geogrid which datasets to interpolate for each field
-ln -sf $WPS_DIR/geogrid/GEOGRID.TBL.ARW $WORK/GEOGRID.TBL
+# Now edit the domain parameters you noted in Step 0
+```
+
+Edit the `&share` and `&geogrid` sections to match Domain Wizard:
+
+| Domain Wizard field | `namelist.wps` parameter | Example |
+|---------------------|--------------------------|---------|
+| Start date / End date | `start_date`, `end_date` | `2026-03-17_12:00:00` |
+| dx / dy (metres) | `dx`, `dy` | `15000` |
+| e_we (W–E grid points) | `e_we` | `150` |
+| e_sn (S–N grid points) | `e_sn` | `130` |
+| Centre latitude | `ref_lat` | `33.00` |
+| Centre longitude | `ref_lon` | `-79.00` |
+| True latitude 1 | `truelat1` | `30.0` |
+| True latitude 2 | `truelat2` | `60.0` |
+| Standard longitude | `stand_lon` | `-79.0` |
+| Projection | `map_proj` | `'lambert'` |
+
+Leave `geog_data_path`, `wrf_core`, `max_dom`, `interval_seconds`, `out_format`,
+`prefix`, and `fg_name` unchanged.
+
+```bash
+# namelist.wps sets opt_geogrid_tbl_path = 'geogrid/', so the table must live there
+mkdir -p $WORK/geogrid
+ln -sf $WPS_DIR/geogrid/GEOGRID.TBL.ARW $WORK/geogrid/GEOGRID.TBL
 
 $WPS_DIR/geogrid.exe >& geogrid.log
 ```
@@ -174,7 +217,7 @@ ls -lh geo_em.d01.nc
 
 ---
 
-### 3 — `ungrib.exe` — GRIB extraction
+### 5 — `ungrib.exe` — GRIB extraction
 
 **What it does:**  
 Reads the raw GRIB2 files from GFS and writes them into the WPS intermediate
@@ -196,7 +239,7 @@ ln -sf $WPS_DIR/ungrib/Variable_Tables/Vtable.GFS $WORK/Vtable
 rm -f $WORK/GRIBFILE.* $WORK/FILE:*
 
 # link_grib.csh creates GRIBFILE.AAA, .AAB, … links from your GRIB files
-$WPS_DIR/link_grib.csh $HOME/WRF_demo/exercises/01_basic_wrf_run/input_grib/gfs_*.grb2
+$WPS_DIR/link_grib.csh $WORK/input_grib/gfs_*.grb2
 ls GRIBFILE.*
 
 $WPS_DIR/ungrib.exe >& ungrib.log
@@ -209,7 +252,7 @@ $WPS_DIR/ungrib.exe >& ungrib.log
 
 ```bash
 tail -5 ungrib.log
-ls FILE:*
+ls GFS:*
 ```
 
 > **Note:** Warnings about optional fields (e.g. `SEAICE`) are harmless.
@@ -217,23 +260,25 @@ ls FILE:*
 
 ---
 
-### 4 — `metgrid.exe` — horizontal interpolation
+### 6 — `metgrid.exe` — horizontal interpolation
 
 **What it does:**  
-Reads the `geo_em` static files and the `FILE:*` intermediate files and
+Reads the `geo_em` static files and the `GFS:*` intermediate files and
 horizontally interpolates the meteorological data onto your WRF grid.
 
 **Files read:**
 - `namelist.wps` (`&metgrid` section)
 - `geo_em.d01.nc`
-- `FILE:YYYY-MM-DD_HH` (all time steps)
+- `GFS:YYYY-MM-DD_HH` (all time steps)
 - `METGRID.TBL.ARW` — interpolation method per field
 
 **Files produced:**
 - `met_em.d01.YYYY-MM-DD_HH:00:00.nc`
 
 ```bash
-ln -sf $WPS_DIR/metgrid/METGRID.TBL.ARW $WORK/METGRID.TBL
+# namelist.wps sets opt_metgrid_tbl_path = 'metgrid/', so the table must live there
+mkdir -p $WORK/metgrid
+ln -sf $WPS_DIR/metgrid/METGRID.TBL.ARW $WORK/metgrid/METGRID.TBL
 
 $WPS_DIR/metgrid.exe >& metgrid.log
 ```
@@ -251,12 +296,12 @@ ls met_em.d01.*.nc
 > **Important:** Note how many pressure levels the met_em files contain —
 > you will need this value for `namelist.input`:
 > ```bash
-> ncdump -h met_em.d01.2019-09-04_12:00:00.nc | grep num_metgrid_levels
+> ncdump -h met_em.d01.YYYY-MM-DD_HH:00:00.nc | grep num_metgrid_levels
 > ```
 
 ---
 
-### 5 — `real.exe` — WRF initialisation
+### 7 — `real.exe` — WRF initialisation
 
 **What it does:**  
 Reads the `met_em` files and `namelist.input` and:
@@ -273,21 +318,35 @@ Reads the `met_em` files and `namelist.input` and:
 - Physics look-up tables (`*.TBL`, `MPTABLE.TBL`, etc.)
 
 **Files produced:**
-- `wrfinput_d01` — initial conditions at t = 0
-- `wrfbdy_d01`   — lateral boundary conditions for the whole run
+- `wrfinput_d01`   — initial conditions at t = 0
+- `wrfbdy_d01`     — lateral boundary conditions for the whole run
+- `wrflowinp_d01`  — time-varying lower boundary conditions (SST, sea-ice) used by `wrf.exe` when `sst_update = 1`
+
+Copy the template to `$WORK` first, then edit it there:
 
 ```bash
 cp $HOME/WRF_demo/exercises/01_basic_wrf_run/namelist.input $WORK/namelist.input
 
-# Verify num_metgrid_levels matches your met_em files and update if needed
-# (replace 34 with the value you got from ncdump above)
-sed -i "s/num_metgrid_levels\s*=\s*[0-9]*/num_metgrid_levels = 34/" namelist.input
+```
 
-# Link all WRF physics tables
-for f in $WRF_DIR/run/*.TBL $WRF_DIR/run/*.asc $WRF_DIR/run/*.bin \
-          $WRF_DIR/run/*.formatted $WRF_DIR/run/tr* $WRF_DIR/run/co2_trans \
-          $WRF_DIR/run/MPTABLE.TBL; do
-    [ -e "$f" ] && ln -sf "$f" $WORK/ || true
+Update these parameters to match your `namelist.wps` and your actual `met_em` files:
+
+| Parameter | Where to get the value |
+|-----------|------------------------|
+| `start_year/month/day/hour` | Your `start_date` in `namelist.wps` |
+| `end_year/month/day/hour` | Your `end_date` in `namelist.wps` |
+| `run_days` / `run_hours` | Length of the forecast (e.g. `run_days = 1, run_hours = 0` for 24 h) |
+| `interval_seconds` | Same as in `namelist.wps` (e.g. `10800` for 3-h GFS output) |
+| `e_we` / `e_sn` | Same grid dimensions as in `namelist.wps` |
+| `dx` / `dy` | Same grid spacing as in `namelist.wps` |
+| `num_metgrid_levels` | From `ncdump -h met_em.d01.*.nc \| grep num_metgrid_levels` |
+
+```bash
+
+# Link all files from the WRF run directory (tables, data files, executables)
+# Exclude namelist.input — that is managed manually in $WORK
+for f in $WRF_DIR/run/*; do
+    [[ -f "$f" && "$(basename $f)" != "namelist.input" ]] && ln -sf "$f" $WORK/ || true
 done
 
 mpirun -np 1 $WRF_DIR/main/real.exe >& real.log
@@ -300,7 +359,7 @@ d01 2019-09-04_12:00:00  real_em: SUCCESS COMPLETE REAL_EM INIT
 
 ```bash
 grep "SUCCESS" real.log
-ls -lh wrfinput_d01 wrfbdy_d01
+ls -lh wrfinput_d01 wrfbdy_d01 wrflowinp_d01
 ```
 
 > **Common pitfall:** `num_metgrid_levels` mismatch causes an immediate abort.
@@ -308,7 +367,7 @@ ls -lh wrfinput_d01 wrfbdy_d01
 
 ---
 
-### 6 — `wrf.exe` — the forecast model
+### 8 — `wrf.exe` — the forecast model
 
 **What it does:**  
 The WRF ARW solver. Reads the IC/BC files from `real.exe` and integrates the
@@ -317,8 +376,9 @@ settings in `namelist.input`.
 
 **Files read:**
 - `namelist.input`
-- `wrfinput_d01` (initial conditions)
-- `wrfbdy_d01`   (lateral boundary conditions)
+- `wrfinput_d01`  (initial conditions)
+- `wrfbdy_d01`    (lateral boundary conditions)
+- `wrflowinp_d01` (time-varying SST/sea-ice, required when `sst_update = 1`)
 - Physics tables (same links used for `real.exe`)
 
 **Files produced:**
@@ -327,8 +387,8 @@ settings in `namelist.input`.
 - `rsl.out.0000`, `rsl.error.0000` — per-rank standard output / error
 
 ```bash
-# Use as many cores as you have available (MAX_CPU is set by env.sh)
-mpirun -np $MAX_CPU $WRF_DIR/main/wrf.exe
+# Use as many cores as you have available 
+mpirun -np 4 $WRF_DIR/main/wrf.exe
 ```
 
 > **Monitor progress** in a second terminal:
@@ -350,10 +410,10 @@ ls -lh wrfout_d01_*
 
 ```bash
 # List all variables in the first output file
-ncdump -h wrfout_d01_2019-09-04_12:00:00
+ncdump -h wrfout_d01_YYYY-MM-DD_HH:00:00
 
 # Print 2-m temperature values at t=0
-ncdump -v T2 wrfout_d01_2019-09-04_12:00:00 | tail -20
+ncdump -v T2 wrfout_d01_YYYY-MM-DD_HH:00:00 | tail -20
 ```
 
 ### Visualisation
@@ -396,7 +456,10 @@ Use `--out myfile.png` to choose a different output filename.
 | `ungrib.exe` produces no `FILE:*` | Vtable mismatch or missing GRIBFILE links | Check `ls GRIBFILE.*`; verify Vtable matches data source |
 | `metgrid.exe` `0 fields` warning | `fg_name` in namelist doesn't match ungrib prefix | Set `fg_name = 'FILE'` |
 | `real.exe` aborts immediately | `num_metgrid_levels` mismatch | Query from met_em: `ncdump -h met_em.*.nc \| grep num_metgrid_levels` |
-| `wrf.exe` crashes at t=0 | Physics table `.TBL` file missing | Check all `.TBL` files are linked in the run directory |
+| `wrf.exe` fatal: `missing file for = auxinput4` | `wrflowinp_d01` not in run directory | `ln -sf $BASE_DIR/run/ex01/wrflowinp_d01 $WORK/` |
+| `wrf.exe` crashes at t=0 | Physics table or data file missing | Re-run the full link loop: `for f in $WRF_DIR/run/*; do [[ -f "$f" && "$(basename $f)" != "namelist.input" ]] && ln -sf "$f" $WORK/; done` |
+| `wrf.exe` fatal: `CAMtr_volume_mixing_ratio does not exist` | Extension-less data file not linked | Included in the loop above — re-run it |
+| `wrf.exe` fatal: `RRTMG_LW_DATA`/`RRTMG_SW_DATA` not found | Extension-less RRTMG data file not linked | Included in the loop above — re-run it |
 | `wrf.exe` CFL violation | Time step too large | Reduce `time_step` (rule of thumb: `dx_km × 6`) |
 
 ---
@@ -420,11 +483,12 @@ All checks must pass before you start Exercise 2.
 |------|--------|-------------------|
 | 0 | Design domain interactively | [WRF Domain Wizard](https://jiririchter.github.io/WRFDomainWizard/) |
 | 1 | Prepare working directory | `bash` |
-| 2 | Static geographical fields | `geogrid.exe` |
-| 3 | Decode GRIB2 to WPS intermediate | `ungrib.exe` |
-| 4 | Horizontal interpolation to WRF grid | `metgrid.exe` |
-| 5 | Vertical interpolation, create IC/BC | `real.exe` |
-| 6 | Run the NWP forecast | `wrf.exe` |
+| 2 | Download GFS boundary data | `get_gfs.sh` |
+| 3 | Static geographical fields | `geogrid.exe` |
+| 4 | Decode GRIB2 to WPS intermediate | `ungrib.exe` |
+| 5 | Horizontal interpolation to WRF grid | `metgrid.exe` |
+| 6 | Vertical interpolation, create IC/BC | `real.exe` |
+| 7 | Run the NWP forecast | `wrf.exe` |
 | — | Visualise output | `plot_wrf_output.py` |
 
 | Executable | Component | Input | Output |

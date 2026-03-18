@@ -26,7 +26,7 @@ echo "========================================================================"
 
 # --- WPS outputs ---
 [ -f "$WORK/geo_em.d01.nc" ]         && ok "geo_em.d01.nc exists"         || fail "geo_em.d01.nc not found — did geogrid.exe finish?"
-ls "$WORK/FILE:"* > /dev/null 2>&1   && ok "ungrib FILE:* files exist"    || fail "FILE:* not found — did ungrib.exe finish?"
+ls "$WORK/GFS:"* > /dev/null 2>&1   && ok "ungrib GFS:* files exist"    || fail "FILE:* not found — did ungrib.exe finish?"
 ls "$WORK/met_em.d01."*.nc > /dev/null 2>&1 && ok "met_em.d01.*.nc files exist" || fail "met_em files not found — did metgrid.exe finish?"
 
 # --- real.exe outputs ---
