@@ -60,7 +60,9 @@ mkdir -p "$BASE"/{libraries,bin,run,logs,install_logs,tmp,WPS_GEOG}
 echo "Installing required system packages..."
 sudo dnf config-manager --set-enabled crb -q
 sudo dnf makecache -y -q
-sudo dnf install -y epel-release gcc gfortran g++ wget tar perl m4 \
+sudo dnf install epel-release -y -q
+sudo dnf update -y -q
+sudo dnf install -y gcc gfortran g++ wget tar perl m4 \
     libcurl-devel csh ksh cmake bc time openssl-devel libxml2-devel \
     eccodes eccodes-devel proj proj-devel nco wgrib2 \
     python3 python3-pip python3-devel -q
