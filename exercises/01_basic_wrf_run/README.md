@@ -16,7 +16,7 @@ reads, and what it produces.
 ├── README.md              ← this file
 ├── get_gfs.sh             ← download GFS boundary data from NOMADS
 ├── namelist.wps           ← WPS configuration — edit domain values from Domain Wizard here
-├── namelist.input         ← WRF configuration (24-h, CONUS physics suite)
+├── namelist.input         ← WRF configuration
 ├── plot_wrf_output.py     ← visualise key output fields (T2, wind, PSFC, Q2)
 ├── check_done.sh          ← run this when finished to verify your outputs
 └── input_grib/            ← GFS GRIB2 files land here after get_gfs.sh
@@ -236,7 +236,7 @@ binary format.  One intermediate file is produced per time step.
 ln -sf $WPS_DIR/ungrib/Variable_Tables/Vtable.GFS $WORK/Vtable
 
 # Remove any old links/files from previous attempts
-rm -f $WORK/GRIBFILE.* $WORK/FILE:*
+rm -f $WORK/GRIBFILE.* $WORK/GFS:*
 
 # link_grib.csh creates GRIBFILE.AAA, .AAB, … links from your GRIB files
 $WPS_DIR/link_grib.csh $WORK/input_grib/gfs_*.grb2
@@ -358,7 +358,7 @@ d01 2019-09-04_12:00:00  real_em: SUCCESS COMPLETE REAL_EM INIT
 ```
 
 ```bash
-grep "SUCCESS" real.log
+grep "SUCCESS" rsl.out.0000
 ls -lh wrfinput_d01 wrfbdy_d01 wrflowinp_d01
 ```
 
